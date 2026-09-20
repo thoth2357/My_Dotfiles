@@ -69,6 +69,7 @@ hl.monitor({
 -- Set programs that you use
 local terminal    = "ghostty"
 local fileManager = "ranger"
+local fileManagerClass = "com.ranger.fm"   -- app-id for the float rule below
 -- rofi: themed from pywal via ~/.config/rofi/pastel.rasi, so it recolours with
 -- the wallpaper. To go back to hyprlauncher, set this to "hyprlauncher" and
 -- restore the " -t" toggle on the SUPER+R bind below.
@@ -357,7 +358,10 @@ hl.bind(mainMod .. " + T", hl.dsp.exec_cmd(terminal))
 local closeWindowBind = hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 -- closeWindowBind:set_enabled(false)
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
-hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(terminal .. " -e " .. fileManager))
+-- File manager as a floating dialog, not a tile. ranger is a TUI so it needs
+-- a terminal; a dedicated app-id lets the rule below size and centre it,
+-- instead of it taking the whole tiling area when it is the only window.
+hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(terminal .. " --class=" .. fileManagerClass .. " -e " .. fileManager))
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("loginctl lock-session"))  -- lock screen (hyprlock via hypridle)
 hl.bind(mainMod .. " + F", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
@@ -623,6 +627,18 @@ hl.window_rule({
     name  = "scratch-term-to-special",
     match = { class = "^(com\\.scratch\\.term)$" },
     workspace = "special:magic",
+})
+
+-- ── 📂 File manager ─────────────────────────────────────────
+-- Floating and centred at a dialog size. Tiled, it filled the whole usable
+-- area whenever it was the only window on the workspace, which is the wrong
+-- shape for something you open, grab a file from, and close.
+hl.window_rule({
+    name  = "float-file-manager",
+    match = { class = "^(com\\.ranger\\.fm)$" },
+    float  = true,
+    center = true,
+    size   = "1200 760",
 })
 
 -- ── 🐉 Garuda tools ──────────────────────────────────────────
