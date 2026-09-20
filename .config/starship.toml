@@ -1,0 +1,191 @@
+## FIRST LINE/ROW: Info & Status
+# First param ─┌
+[username]
+format = " [╭─$user]($style)@"
+show_always = true
+style_root = "bold red"
+style_user = "bold red"
+
+# Second param
+[hostname]
+disabled = false
+format = "[$hostname]($style) in "
+ssh_only = false
+style = "bold dimmed red"
+#trim_at = "-"
+
+# Third param
+[directory]
+style = "purple"
+truncate_to_repo = true
+truncation_length = 0
+truncation_symbol = "repo: "
+
+# Fourth param
+[sudo]
+disabled = false
+
+# Before all the version info (python, nodejs, php, etc.)
+[git_status]
+ahead = "⇡${count}"
+behind = "⇣${count}"
+deleted = "x"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+style = "white"
+
+# Display last commit ID and current Tag version
+[git_commit]
+tag_symbol = '  '
+tag_disabled = false
+only_detached = false # If false, it shows the tag even if you are on a branch
+style = "bold blue"
+
+# Last param in the first line/row
+[cmd_duration]
+disabled = false
+format = "took [$duration]($style)"
+min_time = 1
+
+## SECOND LINE/ROW: Prompt
+# Somethere at the beginning
+[battery]
+charging_symbol = ""
+disabled = true
+discharging_symbol = ""
+full_symbol = ""
+
+[[battery.display]] # "bold red" style when capacity is between 0% and 15%
+disabled = false
+style = "bold red"
+threshold = 15
+
+[[battery.display]] # "bold yellow" style when capacity is between 15% and 50%
+disabled = true
+style = "bold yellow"
+threshold = 50
+
+[[battery.display]] # "bold green" style when capacity is between 50% and 80%
+disabled = true
+style = "bold green"
+threshold = 80
+
+# Prompt: optional param 1
+[time]
+disabled = true
+format = " 🕙 $time($style)\n"
+style = "bright-white"
+time_format = "%T"
+
+# Prompt: param 2
+[character]
+error_symbol = " [×](bold red)"
+success_symbol = " [╰─λ](bold red)"
+
+# Kubernetes context — shows between hostname and directory on line 1
+[kubernetes]
+disabled = false
+format = '\[[󱃾 $context( ⋅ $namespace)]($style)\] '
+style = "bold cyan"
+
+[[kubernetes.contexts]]
+context_pattern = ".*prod.*"
+style = "bold red"
+
+# SYMBOLS
+[status]
+disabled = false
+format = '[\[$symbol$status_common_meaning$status_signal_name$status_maybe_int\]]($style)'
+map_symbol = true
+pipestatus = true
+symbol = "🔴"
+
+[aws]
+symbol = " "
+
+[conda]
+symbol = " "
+
+[dart]
+symbol = " "
+
+[docker_context]
+symbol = " "
+
+[elixir]
+symbol = " "
+
+[elm]
+symbol = " "
+
+[git_branch]
+symbol = " "
+
+[golang]
+symbol = " "
+
+[hg_branch]
+symbol = " "
+
+[java]
+symbol = " "
+
+[julia]
+symbol = " "
+
+[nim]
+symbol = " "
+
+[nix_shell]
+symbol = " "
+
+[nodejs]
+symbol = " "
+
+[package]
+symbol = " "
+
+[perl]
+symbol = " "
+
+[php]
+symbol = " "
+
+[python]
+symbol = " "
+
+[ruby]
+symbol = " "
+
+[rust]
+symbol = " "
+
+[swift]
+symbol = "ﯣ "
+
+# GitHub account currently authenticated with `gh`.
+#
+# Read from ~/.config/gh/hosts.yml rather than `gh api user`: this runs on
+# EVERY prompt, and an API call would add network latency to each one. The
+# username is stored in plaintext there; the token lives in the keyring, so
+# nothing sensitive is touched.
+#
+# Single awk process, no pipeline, and `when` skips it entirely when gh
+# isn't configured.
+[custom.github_user]
+description = "GitHub account gh is logged in as"
+# Read from hosts.yml, not `gh api user`: this runs on EVERY prompt and an API
+# call would put network latency in front of each one. The username is stored
+# in plaintext there; the token lives in the keyring, so nothing secret is read.
+# (TOML note: ''' literal, because the awk script contains single quotes and
+# TOML single-quoted strings have no escape sequences.)
+command = '''awk '/^[[:space:]]+user:/{print $2; exit}' "$HOME/.config/gh/hosts.yml"'''
+when = 'test -f "$HOME/.config/gh/hosts.yml"'
+# Two non-obvious requirements here:
+#  1. Pin /bin/sh. Starship otherwise uses $STARSHIP_SHELL, which is fish, and
+#     fish takes ~1.9s to start on this machine — every custom module silently
+#     blew the 500ms command_timeout and rendered nothing.
+#  2. NO "-c". Starship feeds the command to the shell on STDIN, so "sh -c"
+#     receives no argument, exits immediately and produces empty output.
+shell = ["/bin/sh"]
+format = "[ $output]($style) "
+style = "bold purple"

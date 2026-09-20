@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Network Manager applet
+# Suppresses /etc/xdg/autostart/nm-applet.desktop. A user-level entry of the
+# same name with Hidden=true wins, which is the only way to stop it here:
+# the session is uwsm + systemd --user, which processes XDG autostart, so
+# removing the hyprland.lua exec line alone would not have been enough.
+#
+# Dropped because it duplicated waybar's own network module (two wifi icons
+# side by side) and its click menu is superseded by scripts/wifi.sh.
+# Safe to remove: all saved wifi profiles report psk-flags=0, i.e. secrets
+# are stored by NetworkManager itself, so no running secret agent is needed
+# to reconnect. Bluetooth is blueman-applet and is unaffected.
+Hidden=true

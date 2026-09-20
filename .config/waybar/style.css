@@ -1,0 +1,278 @@
+/* * 🌌 L€yzS Ricing - Waybar | ii-inspired translucent edition 🌌
+ * One frosted strip, icon-first modules, three-tier text hierarchy.
+ */
+
+/* 🎨 DYNAMIC COLOR ENGINE — pywal sync */
+@import "../../.cache/wal/colors-waybar.css";
+
+/* --- 🪜 TEXT EMPHASIS TIERS ---------------------------------------------
+ * Everything used to be flat @foreground, so nothing in the bar ranked
+ * above anything else. These three tiers are the dark-theme emphasis scale
+ * (Material's 87/60/38): high-emphasis text sits under full opacity, which
+ * also avoids the halation you get from near-white on a near-black strip.
+ *
+ * Derived from pywal's @foreground rather than a fixed hex so the bar stays
+ * in key with the wallpaper. To pin it instead, replace @foreground below
+ * with a literal (e.g. #E8E4DC) — nothing else needs to change.
+ *
+ * NOT the textbook 87/60/38. That scale assumes an OPAQUE surface; this bar
+ * is translucent over blurred wallpaper, so the backdrop eats contrast and
+ * the muted tier measured 1.2-2.3:1 against its own surface — below the WCAG
+ * 3:1 floor for large text, let alone 4.5:1. Raised until measured contrast
+ * clears 4.5:1 on all three tiers. Re-measure if the bar's background alpha
+ * changes, because the two are coupled.
+ */
+@define-color fg_primary   alpha(@foreground, 0.96);
+@define-color fg_secondary alpha(@foreground, 0.80);
+@define-color fg_muted     alpha(@foreground, 0.66);
+
+/* Accent. Was @color9, but pywal16 emits color9 as a byte-identical copy of
+ * color1 here, so the accent was indistinguishable from body text.
+ * color4 is one of the only genuinely distinct hues in this palette. */
+@define-color accent       @color4;
+
+/* Status colors stay fixed on purpose — a wallpaper-derived "critical" could
+ * land on something calm, which defeats the point of a critical color. */
+@define-color status_crit  #f38ba8;
+@define-color status_warn  #f9e2af;
+
+/* 🛠️ GLOBAL */
+* {
+    /* Noto Sans is proportional; the bar used Fantasque Sans Mono, a
+     * monospace face, which is what made it read as cramped. The Propo
+     * (proportional) cut of FiraCode NF supplies the glyphs by fallback —
+     * the plain cut has no side bearings, so icons collided with their
+     * numbers once the UI font stopped being monospace. */
+    font-family: "Noto Sans", "FiraCode Nerd Font Propo";
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* 🛸 THE STRIP — single translucent bar */
+window#waybar {
+    /* 0.55 was too sheer — bright wallpaper regions showed through and
+     * destroyed text contrast. Still frosted, just a real surface now. */
+    background: alpha(@background, 0.72);
+    border-radius: 0;
+    color: @fg_secondary;
+}
+
+/* breathing room at the ends */
+.modules-left  { margin-left: 14px; }
+.modules-right { margin-right: 14px; }
+
+/* --- 🧊 WORKSPACES --- */
+#workspaces button {
+    background: transparent;
+    color: @fg_muted;
+    padding: 0 9px;
+    margin: 5px 1px;
+    min-width: 22px;
+    border-radius: 10px;
+    /* background/color only — animating padding here made the whole bar
+     * reflow on every workspace switch */
+    transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                color      0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#workspaces button.active {
+    background: alpha(@accent, 0.25);
+    color: @accent;
+    font-weight: 800;
+}
+
+#workspaces button:hover {
+    background: alpha(@foreground, 0.12);
+    color: @fg_primary;
+}
+
+/* --- 💎 MODULES — flat, compact, no pills --- */
+#clock,
+#window,
+#pulseaudio,
+#network,
+#battery,
+#tray,
+#cpu,
+#memory,
+#temperature,
+#disk,
+#idle_inhibitor,
+#custom-updates,
+#custom-github,
+#custom-notification,
+#custom-media,
+#custom-cluster,
+#custom-tailscale,
+#custom-devports,
+#custom-wakatime,
+#custom-learnlog,
+#custom-scratchpad,
+#custom-power {
+    background: transparent;
+    color: @fg_secondary;
+    padding: 0 10px;
+    margin: 5px 0;
+    border-radius: 10px;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* --- ⏱️ PRIMARY TIER — the things worth reading at a glance --- */
+#clock {
+    color: @fg_primary;
+    font-weight: 700;
+    /* tabular figures: keeps the clock from shuffling width as digits
+     * change. Was free from the monospace font we just dropped. */
+    font-feature-settings: "tnum";
+}
+
+/* UTC companion — muted, tucked close to main clock */
+#clock.utc {
+    color: @fg_muted;
+    font-weight: 600;
+    font-feature-settings: "tnum";
+    padding-left: 2px;
+}
+
+/* window title — secondary, lighter weight, hides when empty */
+#window {
+    color: @fg_secondary;
+    font-weight: 400;
+}
+
+#window.empty {
+    background: transparent;
+    padding: 0;
+}
+
+/* --- 🗄️ DRAWER GROUPS --- */
+/* Children revealed on hover sit slightly dimmer than their head module,
+ * so the group reads as one unit rather than four new competing items. */
+.drawer-child {
+    color: @fg_muted;
+}
+
+#hardware:hover .drawer-child,
+#tools:hover .drawer-child {
+    color: @fg_secondary;
+}
+
+/* --- 🎨 ACCENT TIER --- */
+#custom-media {
+    color: @accent;
+}
+
+/* ── 🛠️ WORK CONTEXT ──────────────────────────────────────────────── */
+
+/* Cluster: dimmed when the API server doesn't answer. The old rule coloured
+ * on context NAME containing "prod", which could never fire against the one
+ * dev context that exists — and said nothing about reachability. */
+#custom-cluster.online  { color: @fg_secondary; }
+#custom-cluster.offline { color: @fg_muted; }
+
+/* Tailscale. Being off is a normal state, not an error — muted, not red.
+ * Routing through an exit node IS worth noticing, so that gets the accent. */
+#custom-tailscale.up       { color: @fg_secondary; }
+/* "off" is legible, not muted: failing to notice the VPN is down is the
+ * exact problem this module exists to solve. It reads "󰖂 off" so the state
+ * is unambiguous without needing colour at all. */
+#custom-tailscale.down     { color: @fg_secondary; }
+#custom-tailscale.exitnode { color: @accent; }
+#custom-tailscale.error    { color: @status_crit; }
+
+/* Dev servers currently listening */
+#custom-devports.serving { color: @fg_secondary; }
+
+/* Coding time today, warming as the daily goal approaches */
+#custom-wakatime.low   { color: @fg_muted; }
+#custom-wakatime.mid   { color: @fg_secondary; }
+#custom-wakatime.goal  { color: @accent; }
+#custom-wakatime.stale { color: @fg_muted; }
+
+/* Hidden scratchpad windows. Accent rather than body text: the whole point
+ * is that something is running where you can't see it. */
+#custom-scratchpad { color: @accent; }
+
+/* Learning captures. Warn colour when Syncthing has left conflict copies
+ * lying around — that means entries from another device aren't in the pool
+ * yet, which is the one failure mode that actually loses information. */
+#custom-learnlog          { color: @fg_secondary; }
+#custom-learnlog.conflict { color: @status_warn; }
+
+/* ☕ caffeine on */
+#idle_inhibitor.activated {
+    color: @accent;
+    background: alpha(@accent, 0.18);
+}
+
+/* pending work is worth noticing */
+#custom-updates,
+#custom-github {
+    color: @accent;
+}
+
+/* --- 🚨 STATUS TIER — overrides everything above --- */
+#battery.warning:not(.charging) {
+    color: @status_warn;
+}
+
+#battery.critical:not(.charging) {
+    background: alpha(@status_crit, 0.25);
+    color: @status_crit;
+}
+
+#temperature.critical {
+    color: @status_crit;
+}
+
+#network.disconnected {
+    color: @status_crit;
+}
+
+/* 🛑 power — accent, sits at the end */
+#custom-power {
+    color: @accent;
+    padding: 0 12px 0 10px;
+}
+
+/* --- 🌈 HOVER — subtle frosted highlight --- */
+#clock:hover,
+#pulseaudio:hover,
+#network:hover,
+#battery:hover,
+#tray:hover,
+#memory:hover,
+#cpu:hover,
+#temperature:hover,
+#disk:hover,
+#idle_inhibitor:hover,
+#custom-updates:hover,
+#custom-github:hover,
+#custom-notification:hover,
+#custom-media:hover,
+#custom-cluster:hover,
+#custom-tailscale:hover,
+#custom-devports:hover,
+#custom-wakatime:hover,
+#custom-learnlog:hover,
+#custom-scratchpad:hover,
+#custom-power:hover {
+    background: alpha(@foreground, 0.12);
+    color: @fg_primary;
+}
+
+/* 💬 tooltips — frosted to match */
+tooltip {
+    background: alpha(@background, 0.92);
+    border: 1px solid alpha(@foreground, 0.15);
+    border-radius: 12px;
+}
+
+tooltip label {
+    color: @fg_primary;
+    font-weight: 400;
+    padding: 6px;
+}

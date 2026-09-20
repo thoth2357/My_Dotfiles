@@ -1,0 +1,72 @@
+{
+  "transition-time": 250,
+  "hide-on-clear": false,
+  "hide-on-action": true,
+  "$schema": "/etc/xdg/swaync/configSchema.json",
+  "positionX": "right",
+  "positionY": "top",
+  "control-center-margin-top": 8,
+  "control-center-margin-bottom": 8,
+  "control-center-margin-right": 12,
+  "control-center-width": 400,
+  "control-center-height": 0,
+  "layer": "overlay",
+  "cssPriority": "user",
+  "widgets": [
+    "buttons-grid",
+    "mpris",
+    "dnd",
+    "title",
+    "notifications"
+  ],
+  "widget-config": {
+    "title": {
+      "text": "󰆴 Notifications",
+      "clear-all-button": true,
+      "button-text": "󰆴"
+    },
+    "dnd": {
+      "text": "Do Not Disturb ✖"
+    },
+    "mpris": {
+      "image-size": 40,
+      "image-radius": 8,
+      "max-visible": 1,
+      "ignore-player": [
+        "helium-browser",
+        "Helium",
+        "chromium"
+      ]
+    },
+    "buttons-grid": {
+      "actions": [
+        {
+          "label": "󰐥",
+          "command": "wlogout -b 5 -c 0 -p layer-shell"
+        },
+        {
+          "label": "󰝟",
+          "command": "pactl set-sink-mute @DEFAULT_SINK@ toggle"
+        },
+        {
+          "label": "󰍃",
+          "command": "hyprctl dispatch exit"
+        },
+        {
+          "label": "󰌾",
+          "command": "hyprlock"
+        }
+      ]
+    }
+  },
+  "notification-window-width": 380,
+  "notification-icon-size": 44,
+  "notification-body-image-height": 80,
+  "notification-body-image-width": 160,
+  "notification-grouping": true,
+  "relative-timestamps": true,
+  "image-visibility": "when-available",
+  "timeout": 6,
+  "timeout-low": 4,
+  "timeout-critical": 0
+}

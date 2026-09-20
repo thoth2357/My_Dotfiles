@@ -1,0 +1,9 @@
+{
+  "model": "opus[1m]",
+  "theme": "auto",
+  "tui": "fullscreen",
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline-command.sh"
+  }
+}

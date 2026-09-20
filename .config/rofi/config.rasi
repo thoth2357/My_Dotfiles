@@ -1,0 +1,14 @@
+configuration {
+    modes:                      "drun,run,window";
+    show-icons:                 true;
+    icon-theme:                 "BeautyLine";
+    drun-display-format:        "{name}";
+    display-drun:               "";
+    display-run:                "";
+    display-window:             "";
+    hover-select:               true;
+    me-select-entry:            "";
+    me-accept-entry:            "MousePrimary";
+}
+
+@theme "~/.config/rofi/pastel.rasi"

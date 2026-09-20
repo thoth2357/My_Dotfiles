@@ -1,0 +1,224 @@
+/* swaync — macOS-style banners, top right.
+ *
+ * Colors follow the wallpaper via pywal, using the same three-tier emphasis
+ * scale as Waybar so the whole desktop reads as one system. The banner
+ * geometry is modelled on macOS: ~380px wide, heavily rounded, hairline
+ * border rather than an accent outline, and a neutral title — macOS does not
+ * tint notification titles, and a colored title fights the app icon for
+ * attention.
+ */
+@import "../../.cache/wal/colors-waybar.css";
+
+/* Same tiers as ~/.config/waybar/style.css */
+@define-color fg_primary   alpha(@foreground, 0.97);
+@define-color fg_secondary alpha(@foreground, 0.82);
+@define-color fg_muted     alpha(@foreground, 0.64);
+@define-color accent       @color4;
+
+* {
+    /* proportional, matching the bar — Fantasque Sans Mono was a monospace
+     * face and made body copy read as a terminal dump */
+    font-family: "Noto Sans", "FiraCode Nerd Font Propo";
+    transition: all 250ms cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+
+/* ══ BANNERS ══════════════════════════════════════════════════════════ */
+
+/* reset GTK defaults before rebuilding the card */
+.widget-notifications,
+.control-center-list,
+.control-center-list-row,
+.notification-row,
+.notification-background,
+.notification,
+.notification-content,
+.notification-group,
+.notification-group-headers {
+    all: unset;
+}
+
+.notification-row {
+    margin: 6px 10px;
+}
+
+.notification-background {
+    background-color: alpha(@background, 0.85);
+    /* hairline, not an accent ring — the border should describe the card's
+     * edge, not compete with the content */
+    border: 1px solid alpha(@foreground, 0.10);
+    border-radius: 16px;
+    padding: 12px 14px;
+    box-shadow: 0 8px 24px alpha(#000000, 0.45);
+}
+
+.notification-background:hover {
+    background-color: alpha(@background, 0.94);
+    border: 1px solid alpha(@foreground, 0.18);
+}
+
+/* critical keeps a real signal; everything else stays neutral */
+.notification-background .notification.critical {
+    border-left: 3px solid #f38ba8;
+}
+
+.summary {
+    font-size: 14px;
+    font-weight: 600;
+    color: @fg_primary;
+    margin-bottom: 2px;
+}
+
+.body {
+    font-size: 13px;
+    font-weight: 400;
+    color: @fg_secondary;
+}
+
+.time {
+    font-size: 11px;
+    color: @fg_muted;
+    margin-right: 2px;
+}
+
+/* app icon / image — macOS rounds these softly */
+.image,
+.body-image {
+    margin: 2px 12px 2px 0;
+    border-radius: 10px;
+}
+
+/* close affordance stays quiet until you go looking for it */
+.close-button {
+    background: transparent;
+    color: @fg_muted;
+    border-radius: 999px;
+    margin: 4px;
+    padding: 2px 6px;
+}
+
+.close-button:hover {
+    background: alpha(@foreground, 0.14);
+    color: @fg_primary;
+}
+
+/* inline action buttons */
+.notification-action {
+    background: alpha(@foreground, 0.08);
+    color: @fg_secondary;
+    border-radius: 10px;
+    margin: 8px 4px 0 0;
+    padding: 6px 10px;
+}
+
+.notification-action:hover {
+    background: alpha(@accent, 0.22);
+    color: @accent;
+}
+
+.notification-group-headers {
+    margin: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: @fg_muted;
+}
+
+/* ══ CONTROL CENTER ═══════════════════════════════════════════════════ */
+
+.control-center {
+    background-color: alpha(@background, 0.92);
+    border: 1px solid alpha(@foreground, 0.12);
+    border-radius: 20px;
+    margin: 10px;
+    padding: 12px;
+    box-shadow: 0 12px 32px alpha(#000000, 0.5);
+}
+
+.widget-title, .widget-dnd {
+    font-size: 15px;
+    font-weight: 600;
+    color: @fg_primary;
+    margin: 2px;
+}
+
+.widget-title > box > button {
+    color: @accent;
+    background: transparent;
+    border-radius: 10px;
+    padding: 2px 8px;
+}
+
+.widget-title > box > button:hover {
+    background: alpha(@accent, 0.20);
+}
+
+/* ── quick-action button row ── */
+.widget-buttons-grid {
+    background-color: alpha(@foreground, 0.06);
+    border-radius: 16px;
+    padding: 8px;
+    margin: 8px 4px;
+}
+
+.widget-buttons-grid > box {
+    justify-content: center;
+}
+
+.widget-buttons-grid button {
+    background: transparent;
+    color: @fg_secondary;
+    font-size: 17px;
+    padding: 8px 12px;
+    margin: 0 14px;
+    border-radius: 12px;
+    box-shadow: none;
+    border: none;
+}
+
+.widget-buttons-grid button:hover {
+    background: alpha(@accent, 0.22);
+    color: @accent;
+}
+
+/* ── DND switch ── */
+.widget-dnd {
+    margin: 8px 6px;
+}
+
+.widget-dnd > switch {
+    background: alpha(@foreground, 0.15);
+    border-radius: 14px;
+    padding: 2px;
+}
+
+.widget-dnd > switch:checked {
+    background: @accent;
+}
+
+.widget-dnd > switch slider {
+    background: @background;
+    border-radius: 10px;
+}
+
+/* ── MPRIS — the bar's media module moved here ── */
+.widget-mpris {
+    min-width: 200px;
+    background: alpha(@foreground, 0.06);
+    border-radius: 16px;
+    padding: 8px;
+    margin: 8px 4px;
+}
+
+.widget-mpris-player {
+    padding: 4px;
+}
+
+.widget-mpris-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: @fg_primary;
+}
+
+.widget-mpris-subtitle {
+    font-size: 12px;
+    color: @fg_secondary;
+}

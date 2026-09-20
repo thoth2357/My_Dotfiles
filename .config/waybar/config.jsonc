@@ -1,0 +1,353 @@
+{
+    /* * 🌌 L€yzS Ricing - Waybar Configuration 🌌
+     * 🖥️  Output: all monitors | Setup: Top dock | Senior-dev edition
+     *
+     * Sizing note: this panel is 1920x1080 @ 310x170mm ~= 157 DPI running at
+     * scale 1. Defaults assume 96 DPI, so everything renders ~61% of intended
+     * physical size. Heights/paddings below are deliberately larger than the
+     * usual Waybar example configs to compensate.
+     */
+
+    "reload_config_on_change": true,
+    "reload_style_on_change": true,
+    "layer": "top",
+    "position": "top",
+    "height": 40,
+    "margin-left": 0,
+    "margin-right": 0,
+    "spacing": 4,
+    "mode": "dock",
+    "exclusive": true,
+    "passthrough": false,
+    "gtk-layer-shell": true,
+
+    /* Module Layout: context left, time center, telemetry right.
+     * The right side used to carry 15 flat modules competing for attention.
+     * Hardware and background-status now live in hover drawers, so only the
+     * head module of each is visible at rest.
+     */
+    "modules-left": ["hyprland/workspaces", "custom/scratchpad", "custom/wakatime", "custom/learnlog", "hyprland/window"],
+    "modules-center": ["clock", "clock#utc"],
+    "modules-right": [
+        "custom/tailscale",
+        "custom/cluster",
+        "custom/devports",
+        "custom/github",
+        "custom/updates",
+        "tray",
+        "idle_inhibitor",
+        "group/hardware",
+        "pulseaudio",
+        "network",
+        "battery",
+        "custom/notification",
+        "custom/power"
+    ],
+
+    /* Hardware telemetry — cpu always visible, rest on hover */
+    "group/hardware": {
+        "orientation": "horizontal",
+        "drawer": {
+            "transition-duration": 350,
+            "children-class": "drawer-child",
+            "transition-left-to-right": false
+        },
+        "modules": ["cpu", "memory", "temperature", "disk"]
+    },
+
+    /* Workspaces */
+    "hyprland/workspaces": {
+        "format": "{name}",
+        "on-click": "activate",
+        "persistent-workspaces": {
+            "1": [], "2": [], "3": [], "4": []
+        }
+    },
+
+    /* Active window title */
+    "hyprland/window": {
+        "format": "{title}",
+        "max-length": 35,
+        "separate-outputs": true
+    },
+
+    /* Clock & Date (WAT) — click to toggle full date, hover for calendar */
+    "clock": {
+        "timezone": "Africa/Lagos",
+        "format": "󰥔 {:%I:%M %p}",
+        "format-alt": "󰸗 {:%a %d %b}",
+        "interval": 60,
+        "tooltip-format": "<tt><small>{calendar}</small></tt>",
+        "calendar": {
+            "mode": "month",
+            "format": {
+                "today": "<span color='#ff6699'><b>{}</b></span>",
+                "weekdays": "<span color='#1DB954'><b>{}</b></span>"
+            }
+        }
+    },
+
+    /* UTC companion clock */
+    "clock#utc": {
+        "timezone": "Etc/UTC",
+        "format": "󰇧 {:%I:%M %p}",
+        "interval": 60,
+        "tooltip-format": "Coordinated Universal Time"
+    },
+
+    /* Media Player (playerctl). NOT in modules-right — this machine is a
+     * work box and the bar should stay information-dense, not a now-playing
+     * strip. swaync's control center carries an mpris widget instead.
+     * Re-enable by adding "custom/media" back to modules-right. */
+    "custom/media": {
+        "format": "{}",
+        "max-length": 30,
+        "interval": 2,
+        "escape": true,
+        "exec": "m=$(playerctl metadata --format '{{ artist }} - {{ title }}' 2>/dev/null); [ -n \"$m\" ] && echo \"󰝚 $m\"",
+        "on-click": "playerctl play-pause",
+        "on-scroll-up": "playerctl next",
+        "on-scroll-down": "playerctl previous"
+    },
+
+    /* Kube context + whether the API server actually answers.
+     * Was 3s against a cluster that is frequently unreachable; the context
+     * itself changes almost never, so 30s is plenty. */
+    "custom/cluster": {
+        "format": "{}",
+        "return-type": "json",
+        "interval": 30,
+        "max-length": 28,
+        "exec": "~/.config/waybar/scripts/cluster.sh",
+        "on-click": "ghostty -e fish -c kubectx; pkill -SIGRTMIN+9 waybar",
+        "signal": 9
+    },
+
+    /* Tailscale — the most-checked-by-hand thing on this machine.
+     * Click toggles the connection, right-click picks an exit node. */
+    "custom/tailscale": {
+        "format": "{}",
+        "return-type": "json",
+        "interval": 10,
+        "exec": "~/.config/waybar/scripts/tailscale.sh",
+        "on-click": "tailscale status --json | grep -q '\"BackendState\": \"Running\"' && tailscale down || tailscale up; pkill -SIGRTMIN+6 waybar",
+        "on-click-right": "ghostty -e sh -c 'tailscale exit-node list; read -p \"exit-node: \" n; [ -n \"$n\" ] && tailscale set --exit-node=\"$n\"'; pkill -SIGRTMIN+6 waybar",
+        "signal": 6
+    },
+
+    /* Local dev servers that are actually listening. Hides when nothing
+     * is serving; editor/daemon ports are filtered out in the script. */
+    "custom/devports": {
+        "format": "󰒋 {}",
+        "return-type": "json",
+        "interval": 10,
+        "exec": "~/.config/waybar/scripts/devports.sh",
+        "on-click": "ghostty -e sh -c 'ss -tlnp; read'"
+    },
+
+    /* System Tray */
+    "tray": {
+        "icon-size": 20,
+        "spacing": 6,
+        /* Three items register on the SNI bus here:
+         *   blueman                        -> renders (bluetooth)
+         *   "Garuda System Maintenance"    -> Passive, so never drawn;
+         *                                     show-passive-items = true
+         *                                     would surface it
+         *   "Docker Desktop_status_icon_1" -> rejected by waybar
+         *
+         * Docker Desktop's item is malformed: it advertises an IconPixmap,
+         * but its IconName property getter throws
+         * org.freedesktop.DBus.Error.Failed on every call and the object
+         * introspects with no interfaces at all. Waybar therefore logs
+         * "Invalid Status Notifier Item" and drops it BEFORE any icon
+         * lookup, so the mapping below does not currently take effect —
+         * it is kept because it is correct and will work if Docker ever
+         * fixes the getter. This is a Docker Desktop bug, not a config one;
+         * nothing on the waybar side can render that item today.
+         * Docker Desktop does not autostart (AutoStart=False), so quitting
+         * it when unused is the only way to silence the log line. */
+        "icons": {
+            "Docker Desktop_status_icon_1": "docker-desktop"
+        }
+    },
+
+    /* Idle Inhibitor — caffeine toggle, keeps the screen awake */
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "󰅶",
+            "deactivated": "󰾪"
+        },
+        "tooltip-format-activated": "Screen locked awake",
+        "tooltip-format-deactivated": "Idle allowed"
+    },
+
+    /* Pacman + AUR updates — click to update, refreshes after.
+     * Emits nothing at 0 so the module disappears instead of showing "0".
+     */
+    "custom/updates": {
+        "format": "󰅢 {}",
+        "interval": 3600,
+        "exec": "u=$(checkupdates 2>/dev/null | wc -l); a=$(paru -Qua 2>/dev/null | wc -l); t=$((u+a)); [ \"$t\" -gt 0 ] && echo \"$t\"",
+        "on-click": "ghostty -e paru; pkill -SIGRTMIN+8 waybar",
+        "signal": 8,
+        "tooltip-format": "Pending pacman + AUR updates"
+    },
+
+    /* GitHub notifications — click to open inbox. Hidden at 0. */
+    "custom/github": {
+        "format": "󰊤 {}",
+        "interval": 300,
+        "exec-if": "gh auth status >/dev/null 2>&1",
+        "exec": "n=$(gh api notifications --jq 'length' 2>/dev/null || echo 0); [ \"$n\" -gt 0 ] && echo \"$n\"",
+        "on-click": "xdg-open https://github.com/notifications",
+        "tooltip-format": "GitHub notifications"
+    },
+
+    /* Windows parked in a Hyprland special workspace. They stay running
+     * while hidden and nothing else surfaces them, so this is the only
+     * thing that stops a process being forgotten in there. Hides at zero. */
+    "custom/scratchpad": {
+        "format": "{}",
+        "return-type": "json",
+        "interval": 3,
+        "exec": "~/.config/waybar/scripts/scratchpad.sh",
+        "on-click": "hyprctl dispatch 'hl.dsp.workspace.toggle_special(\"magic\")'",
+        "signal": 5
+    },
+
+    /* Today's coding time. WakaTime was already collecting and had no
+     * surface anywhere; a failed API call renders a neutral dash. */
+    "custom/wakatime": {
+        "format": "{}",
+        "return-type": "json",
+        "interval": 300,
+        "exec": "~/.config/waybar/scripts/wakatime.sh",
+        "on-click": "xdg-open https://wakatime.com/dashboard"
+    },
+
+    /* Learning captures, pooled across devices via the Syncthing-backed
+     * ~/ALIAS/learning. Shows today's count; tooltip carries the untriaged
+     * inbox depth and warns on sync conflicts. Hides when the pool is empty.
+     * SUPER+N captures. */
+    "custom/learnlog": {
+        "format": "{}",
+        "return-type": "json",
+        "interval": 60,
+        "exec": "~/.config/waybar/scripts/learnlog.sh",
+        "on-click": "code $HOME/ALIAS/learning/INBOX.md",
+        "on-click-right": "ghostty -e sh -c '~/.config/waybar/scripts/learn-merge.sh; read -p \"[enter]\"'",
+        "signal": 7
+    },
+
+    /* CPU Usage — head of the hardware drawer */
+    "cpu": {
+        "interval": 2,
+        "format": "󰻠 {usage}%",
+        "tooltip-format": "CPU {usage}% — hover to expand, click for htop",
+        "on-click": "ghostty -e htop"
+    },
+
+    /* Memory Usage */
+    "memory": {
+        "interval": 2,
+        "format": "󰍛 {used:0.1f}G",
+        "tooltip-format": "{used:0.1f}G / {total:0.1f}G ({percentage}%)",
+        "on-click": "ghostty -e htop"
+    },
+
+    /* CPU Package Temperature */
+    "temperature": {
+        "hwmon-path-abs": "/sys/devices/platform/coretemp.0/hwmon",
+        "input-filename": "temp1_input",
+        "critical-threshold": 85,
+        "interval": 2,
+        "format": "󰔏 {temperatureC}°"
+    },
+
+    /* Root filesystem free space */
+    "disk": {
+        "interval": 60,
+        "format": "󰋊 {free}",
+        "path": "/",
+        "tooltip-format": "{used} used of {total} ({percentage_used}%)"
+    },
+
+    /* Audio Control — scroll to change volume */
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": "󰝟",
+        "format-icons": { "default": ["󰕿", "󰖀", "󰕾"] },
+        "on-click": "pavucontrol",
+        "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
+        "on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +5%",
+        "on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -5%",
+        "smooth-scrolling-threshold": 1,
+        "max-volume": 150
+    },
+
+    /* Network — icon carries signal strength, tooltip has SSID/IP/traffic.
+     * Click opens a rofi picker (scripts/wifi.sh) rather than nmtui: the job
+     * is almost always "connect me to that network", which is one keystroke
+     * in a list and a full-screen TUI session in nmtui. Right-click goes
+     * straight to nm-connection-editor for static IPs / 802.1x / VPN. */
+    "network": {
+        "interval": 3,
+        "format-wifi": "{icon}",
+        "format-ethernet": "󰈀",
+        "format-disconnected": "󰤮",
+        "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+        "tooltip-format-wifi": "{essid} — {signalStrength}%\n{frequency} GHz · {ipaddr}/{cidr}\n⇡ {bandwidthUpBytes}  ⇣ {bandwidthDownBytes}",
+        "tooltip-format-ethernet": "{ifname}: {ipaddr}/{cidr}",
+        "tooltip-format-disconnected": "Disconnected",
+        "on-click": "~/.config/waybar/scripts/wifi.sh",
+        "on-click-right": "nm-connection-editor"
+    },
+
+    /* Battery — time-to-empty + draw in tooltip */
+    "battery": {
+        "states": {
+            "warning": 25,
+            "critical": 12
+        },
+        "format": "{icon} {capacity}%",
+        "format-charging": "󰂄 {capacity}%",
+        "format-plugged": "󰚥 {capacity}%",
+        "format-icons": ["󰁺", "󰁼", "󰁾", "󰂀", "󰂂"],
+        "tooltip-format": "{timeTo}\n{power:0.1f} W draw"
+    },
+
+    /* Notification Center (SwayNC).
+     * No "restart-interval" here on purpose: `swaync-client -swb` is a
+     * streaming subscription, not a one-shot. Restarting it every second
+     * re-forked a child per second and leaked zombies (~26 over 12 days).
+     */
+    "custom/notification": {
+        "tooltip": false,
+        "format": "{icon}",
+        "format-icons": {
+            "notification": "󰂚<span foreground='#f38ba8'><sup>●</sup></span>",
+            "none": "󰂜",
+            "dnd-notification": "󰂛<span foreground='#f38ba8'><sup>●</sup></span>",
+            "dnd-none": "󰂛",
+            "inhibited-notification": "󰂚<span foreground='#f38ba8'><sup>●</sup></span>",
+            "inhibited-none": "󰂜",
+            "dnd-inhibited-notification": "󰂛<span foreground='#f38ba8'><sup>●</sup></span>",
+            "dnd-inhibited-none": "󰂛"
+        },
+        "return-type": "json",
+        "exec-if": "which swaync-client",
+        "exec": "swaync-client -swb",
+        "on-click": "swaync-client -t -sw",
+        "on-click-right": "swaync-client -d -sw",
+        "escape": true
+    },
+
+    /* Power Menu (Wlogout) */
+    "custom/power": {
+        "format": "󰐥",
+        "on-click": "wlogout -b 5 -c 0 -p layer-shell",
+        "tooltip": false
+    }
+}
