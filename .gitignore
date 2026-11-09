@@ -40,6 +40,13 @@
 /.config/autostart/*
 !/.config/autostart/nm-applet.desktop
 
+# environment.d: per-file on purpose. These files become session-wide env vars,
+# which is exactly where API keys get put; a new file must be reviewed and
+# allow-listed explicitly, never picked up by a directory rule.
+!/.config/environment.d
+/.config/environment.d/*
+!/.config/environment.d/ssh-agent.conf
+
 # syncthing-gtk: autostart_daemon=0 / autokill_daemon=0 so the tray attaches to
 # the daemon hyprland.lua starts instead of spawning a second one (and killing
 # the real one on exit). Losing this on a restore is a real bug, so track it.
