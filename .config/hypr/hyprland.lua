@@ -53,6 +53,16 @@ hl.monitor({
     mirror = "eDP-1",
 })
 
+-- Hisense projector over HDMI — mirror the laptop panel.
+-- Its EDID prefers 3840x2160@30, which the link can't hold: the picture went
+-- green and the connector kept flapping. Pin 1080p60 to match eDP-1.
+hl.monitor({
+    output = "desc:Hisense Electric Co., Ltd. HDMI 0x00000001",
+    mode   = "1920x1080@60",
+    scale  = 1,
+    mirror = "eDP-1",
+})
+
 -- Fallback for anything else that gets plugged in
 hl.monitor({
     output   = "",
@@ -60,6 +70,22 @@ hl.monitor({
     position = "auto",
     scale    = 1,
 })
+
+-- ── Workspaces per monitor ──────────────────────────────────
+-- 1-5 live on the laptop, 6-10 on the Xiaomi, so SUPER+N always lands on a
+-- fixed screen and each Waybar only lists its own monitor's workspaces.
+-- If the Xiaomi is unplugged, Hyprland moves 6-10 onto the laptop.
+-- 1-4 and 6-9 are persistent so they show in the bar even when empty
+-- (this replaced Waybar's own persistent list, which drew 1-4 on every bar).
+local XIAOMI = "desc:Xiaomi Corporation Mi monitor 5506010002216"
+for i = 1, 10 do
+    hl.workspace_rule({
+        workspace  = tostring(i),
+        monitor    = (i <= 5) and "eDP-1" or XIAOMI,
+        default    = (i == 1 or i == 6),
+        persistent = (i ~= 5 and i ~= 10),
+    })
+end
 
 
 ---------------------
@@ -581,7 +607,7 @@ hl.window_rule({
 hl.window_rule({
     name  = "code-glass",
     match = { class = "^([Cc]ode|code-url-handler|code-oss|[Vv][Ss][Cc]odium)$" },
-    opacity = "0.92 override 0.88 override",
+    opacity = "0.85 override 0.80 override",
 })
 
 -- ── Popups & dialogs should float, not tile ──────────────────
@@ -702,6 +728,18 @@ hl.window_rule({
     name  = "float-auth-popups-initial",
     match = { initial_title = "^(Sign [Ii]n|Sign [Uu]p|Log [Ii]n|Login|Authentication [Rr]equired|Authorize|OAuth|Confirm|.*Google Accounts).*" },
     float = true,
+})
+
+-- ── 🔑 1Password ─────────────────────────────────────────────
+-- Unlock / authorize / Quick Access prompts are fixed-size Electron windows.
+-- Tiled, they got squeezed into a layout slot and their content was clipped.
+-- Floating lets them keep the size they ask for. Covers the main window too;
+-- SUPER+F tiles it back if wanted.
+hl.window_rule({
+    name   = "float-1password",
+    match  = { class = "^(1[Pp]assword)$" },
+    float  = true,
+    center = true,
 })
 
 

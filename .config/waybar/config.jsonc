@@ -58,10 +58,9 @@
     /* Workspaces */
     "hyprland/workspaces": {
         "format": "{name}",
-        "on-click": "activate",
-        "persistent-workspaces": {
-            "1": [], "2": [], "3": [], "4": []
-        }
+        "on-click": "activate"
+        /* Persistent workspaces come from Hyprland's workspace rules
+         * (1-4 laptop, 6-9 Xiaomi) so each bar shows only its own. */
     },
 
     /* Active window title */
@@ -151,6 +150,10 @@
         "spacing": 6,
         /* Three items register on the SNI bus here:
          *   blueman                        -> renders (bluetooth)
+         *   "1Password_status_icon_1"      -> renders; needs
+         *                                     "app.keepInTray": true in
+         *                                     ~/.config/1Password/settings
+         *                                     (set while 1Password is quit)
          *   "Garuda System Maintenance"    -> Passive, so never drawn;
          *                                     show-passive-items = true
          *                                     would surface it
