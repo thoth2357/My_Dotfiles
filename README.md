@@ -20,6 +20,12 @@ rather than copied. The other branches are snapshots, so their layout differs.
 | `.config/waypaper/` | Wallpaper picker + the pywal refresh pipeline |
 | `.config/ghostty/`, `rofi/`, `wlogout/`, `cursor-clip/` | Terminal, launcher, logout, clipboard |
 | `.config/gtk-3.0/`, `gtk-4.0/`, `qt5ct/`, `qt6ct/` | Toolkit theming |
+| `.config/hypr/scripts/` | VS Code project picker, screen recording toggle (wl-screenrec) |
+| `.config/environment.d/` | Session environment (ssh-agent socket only) |
+| `.config/autostart/`, `syncthing-gtk/` | Tray apps started with the session |
+| `.claude/` | Claude Code settings and status line (settings only — never sessions or memory) |
+| `.vim/` | vim-wakatime, as a git submodule |
+| `.bashrc`, `.zshrc`, `.gtkrc-2.0` | Fallback shells, GTK2 theming |
 
 ## Theming
 
@@ -42,6 +48,23 @@ so sizes here are deliberately larger than typical example configs. GTK apps
 use `text-scaling-factor = 1.25`; Waybar is sized explicitly in px, because GTK
 text scaling does not affect its CSS pixel sizes.
 
+## Plugins
+
+- **hy3** (i3-style manual tiling) is **built by hand**, not through `hyprpm`,
+  and loaded from `~/.local/share/hy3/libhy3.so` at startup. It must be rebuilt
+  after every `hyprland` package update (tags are `hl<version>`), or it fails to
+  load on ABI mismatch:
+
+  ```sh
+  cd ~/.local/src/hy3 && git fetch --tags && git checkout hl<version> \
+    && cmake -DCMAKE_BUILD_TYPE=Release -B build && cmake --build build -j \
+    && cp build/libhy3.so ~/.local/share/hy3/libhy3.so
+  ```
+- **hyprglass** (glass effects) is managed by `hyprpm`; autostart runs
+  `hyprpm reload -n`.
+- Both are optional: their config sits behind `if hl.plugin.<name> ~= nil`
+  guards, so without them the layout falls back to dwindle and plain layer blur.
+
 ## Gotchas worth keeping
 
 - `conda init` blocks in `fish/config.fish`, `.zshrc` and `.bashrc` are
@@ -52,6 +75,8 @@ text scaling does not affect its CSS pixel sizes.
 - Waybar's clock uses `%I`, not `%-I` — its chrono library rejects the no-pad flag.
 - Starship custom modules pin `shell = ["/bin/sh"]` with **no** `-c`: Starship
   feeds the command on stdin, and `$STARSHIP_SHELL` is fish.
+- `environment.d` does **not** expand systemd specifiers like `%t`; the
+  ssh-agent socket path is written as `${XDG_RUNTIME_DIR}/ssh-agent.socket`.
 - A few Waybar modules are machine-local and not tracked. Their definitions
   remain in `config.jsonc`; with no script present they produce no output and
   simply do not render, and their CSS is still in `style.css`.
@@ -77,7 +102,11 @@ defined for fish, zsh and bash.
 git clone --bare <this repo> $HOME/.dotfiles
 git --git-dir=$HOME/.dotfiles --work-tree=$HOME checkout arch-hyprland
 git --git-dir=$HOME/.dotfiles --work-tree=$HOME config status.showUntrackedFiles no
+git --git-dir=$HOME/.dotfiles --work-tree=$HOME submodule update --init
 ```
+
+`checkout` refuses to overwrite existing files (a fresh install's default
+`.bashrc`, for example); move those aside first.
 
 ### Tracking rules
 
